@@ -1,0 +1,9 @@
+{% if settings %}
+    <ul>
+    {% for setting in settings %}
+        <li> {{ setting.name }} - {{ setting.pub_date }} </li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No saved settings are available.</p>
+{% endif %}

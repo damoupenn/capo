@@ -1,0 +1,13 @@
+{% extends "corr_monitor/index.html" %}
+{% block main_display %}
+{% if visibilities %}
+    <table class="module"><caption><h2>All Visibilities</h2></caption>
+    <tbody class="vis">
+    {{visibilities.rows|safe}}
+    </tbody>
+    </table>
+     {{visibilities.count}} visibilites selected
+{% else %}
+ <p> No visibilities are available </p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,42 @@
+<head>
+<link rel="stylesheet" type="text/css" href="/corr_monitor/media/css/corr.css">
+<link rel="stylesheet" type="text/css" href="/media/css/base.css" />
+
+</head>
+
+{% if filters %}
+<div  class="module">
+<table border="1" width="100%">
+{% for filter in filters %}
+   <tr class="{% cycle 'row1' 'row2' %}" onmouseover="this.className='mouseover'" onmouseout="this.className='{% cycle 'row1' 'row2' %}'">
+   <td>
+   <span style="font-size:10pt">{{ filter.name}}</span>
+    {{filter.values}}, {{ filter.setting.all }}
+   </td>
+   <td>
+   <a href="/corr_monitor/filters/{{ filter.id }}/toggle/">Apply</a>
+   </td>
+   <td style="text-align:right">
+   <a href="/corr_monitor/filters/{{filter.id}}/">Edit</a>
+   </td>
+   </tr>
+{% endfor %}
+{% if current_filter %}
+   <tr class="current"><td>
+   <span style="font-size:10pt">{{ current_filter.name}}</span>
+ <!--   {{current_filter.values}}, {{ current_filter.setting.all }}-->  
+   </td>
+   <td>
+   Applied
+   </td>
+   <td style="text-align:right">
+   <a href="/corr_monitor/filters/{{current_filter.id}}/">Edit</a>   
+   </td>
+   </tr>
+{% endif %}
+</table>
+</div>
+{% else %}
+<p>No filters were found</p>
+{% endif %}
+<a href="/corr_monitor/filters/add/">New Filter</a>
