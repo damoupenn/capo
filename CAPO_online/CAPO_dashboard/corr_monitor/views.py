@@ -123,7 +123,8 @@ def update_settings(request):
     return render_to_response('corr_monitor/setting_detail.html',
        {'form':form})
     
-    
+def help(request):
+    return render_to_response('corr_monitor/help.html')
         
 def filter_toggle(request,f_id):
     """
@@ -291,7 +292,7 @@ def adjust_plot(vis):
     if not pset.xmin is None:
         pl.xlim(xmin=float(pset.xmin))
     if not pset.xmax is None:
-        pl.xmax(xmax=float(pset.xmax))
+        pl.xlim(xmax=float(pset.xmax))
     
         #pl.title(str(pset.ymax))
 

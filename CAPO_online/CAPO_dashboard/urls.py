@@ -27,6 +27,7 @@ urlpatterns = patterns('',
     (r'^corr_monitor/filters/(?P<f_id>\d+)/toggle/$','CAPO_dashboard.corr_monitor.views.filter_toggle'),
     (r'^corr_monitor/filters/(?P<f_id>\d+)/update/$','CAPO_dashboard.corr_monitor.views.filter_detail'),
     (r'^corr_monitor/filters/save/$','CAPO_dashboard.corr_monitor.views.filter_detail'),
+    (r'^corr_monitor/help/$','CAPO_dashboard.corr_monitor.views.help'),
     (r'^corr_monitor/filters/add/$','CAPO_dashboard.corr_monitor.views.filter_detail') #TODO: Possibly rename select to filters/modify.html?
     #(r'^corr_monitor/corr.css',include('CAPO_dashboard.corr_monitor.corr.css'))
 )

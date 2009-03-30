@@ -1,0 +1,41 @@
+{% extends "corr_monitor/base_site.html" %}
+
+{% block content %}
+<h3>Basic Usage</h3>
+<p>Visibilities or baseline listings are extracted from the database written by 
+the correlator recieve script.  Once oCAPO is pointed at the correct database its 
+internal visibility index can be updated by clicking <b>Update</b> near the top of the 
+page.  This update only needs to be performed when the database is changed or
+the correlator is reconfigured.</p>
+<p>
+The visibility listing is displayed in a grid on the <b>Home</b> view.  The listing
+may be filtered by antenna number, polerization etc using the <b>Filters</b> to the
+right of the visibility table. Create or modify filters as necessary. Only one
+is applied at a time. Refresh the page (ctrl-R) to apply the changes to the visibility
+listing.
+</p>
+<p>
+Click on a visibility in the table to see a plot of the correlator output. Change 
+the properties of the plot using the table at the right. This function hits the 
+database every time it is generated. To monitor a baseline, simply refresh the page.
+</p>
+<p>
+Add a correlator database by going into the <b>Admin</b> interface and navigating
+to the <b>Corr DBs</b> listing and clicking <b>add corr db</b>.
+</p>
+<h3> Feature Tracking </h3>
+Now v1.0:
+<ul>
+<li>Visibility filtering.
+<li>Plotting (individual baseline)
+<li>Easy scaling of plots
+<li>Switching between databases.
+</ul>
+For next version v1.1:
+<ul>
+<li>Data quality monitoring.
+<li>Multiple plots at the same time
+<li>User selectable plot function (abs,phase,unwrapped phase, etc)
+<li><b>Open for suggestions!</b>
+</ul>
+{% endblock %}
