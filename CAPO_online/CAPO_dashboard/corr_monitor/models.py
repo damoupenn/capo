@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib import admin
 import corr.plotdb
+from config import *
 
 class Setting(models.Model):
     def __unicode__(self):
@@ -33,7 +34,7 @@ class CorrDB(models.Model):
     def __unicode__(self):
         return self.filename
     filename = models.FilePathField(
-        path="/Users/danny/Work/radio_astronomy/Software/CAPO/CAPO_online/CAPO_dashboard/corr_monitor/",
+        path=dbpath,
         match=".*\.db",
         #recursive=True,
         max_length=200)

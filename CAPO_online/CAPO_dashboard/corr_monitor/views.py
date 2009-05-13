@@ -9,6 +9,7 @@ from django.contrib import admin
 import corr.plotdb
 from django.forms import ModelForm
 import pylab as pl
+from config import *
 
 
 dbfilename = '/Users/danny/Work/radio_astronomy/Software/CAPO/CAPO_online/CAPO_dashboard/corr_monitor/corr.db'
@@ -317,7 +318,7 @@ def vis_detail(request, vis_id):
     db = corr.plotdb.NumpyDB(dbfilename)
     dataseries = db.read(str(vis.baseline))
     outfile = '/corr_monitor/media/img/temp.png'
-    temproot = '/Users/danny/Work/radio_astronomy/Software/CAPO/CAPO_online/CAPO_dashboard/templates'
+
     pl.plot(np.abs(dataseries))
     pl.grid()
     pl.ylabel('raw amplitude [V]')
