@@ -1,7 +1,9 @@
 from django.db import models
 from django.contrib import admin
 import corr.plotdb
-from config import *
+from CAPO_dashboard.corr_monitor.config import *
+from CAPO_dashboard.corr_monitor.warning_funcs import *
+import CAPO_dashboard.corr_monitor.warning_funcs as warning_func_set
 
 class Setting(models.Model):
     def __unicode__(self):
@@ -23,12 +25,28 @@ class PlotSetting(models.Model):
         return str(self.id)   
     ymin = models.FloatField(blank=True,null=True)
     ymax = models.FloatField(blank=True,null=True)
-    visibility = models.ManyToManyField('Visibility')
+    visibility = models.ForeignKey('Visibility')
     xmin = models.FloatField(blank=True,null=True)
     xmax = models.FloatField(blank=True,null=True)
-    x_zero = models.FloatField(blank=True,null=True)
-    x_scale = models.FloatField(blank=True,null=True)
-    plot_func = models.CharField(max_length=50,blank=True,null=True)
+    xaxis_types = (
+       ('freq','freq'),
+       ('chan','chan')
+    )
+    xaxis = models.CharField(max_length=25,choices=xaxis_types,default='freq')
+    plot_types = (
+       ('plot','linear'),
+       ('semilogx','semilogx'),
+       ('semilogy','semilogy'),
+       ('loglog','loglog')      
+    )
+    plot_func = models.CharField(max_length=50,choices=plot_types,default='plot')
+    data_funcs = (
+        ('abs','abs'),
+        ('phs','phs')
+#        ('abs&phs','abs&phs'),
+#        ('complex','complex')
+    )
+    data_func = models.CharField(max_length=50,choices=data_funcs,default='abs')
 admin.site.register(PlotSetting)
 class CorrDB(models.Model):
     def __unicode__(self):
@@ -42,11 +60,19 @@ class CorrDB(models.Model):
     #def copy(self,name):
     #   """ Saves a copy of the DB file TODO"""
     
-class Warning(models.Model):
+class Warning_func(models.Model):
     def __unicode__(self):
         return self.name
     name = models.CharField(max_length=200)
-    amp_upper_threshold_ex = models.BooleanField(default=False)
+    function = models.CharField(max_length=50)
+    parms=models.CharField(max_length=50)
+    active = models.BooleanField(blank=True,null=True)
+admin.site.register(Warning_func)    
+class Warning(models.Model):
+    def __unicode__(self):
+        return str(self.type)+str(self.baseline) + str(self.datetime)
+    type = models.ForeignKey('Warning_func')
+    baseline = models.ForeignKey('Visibility')
     datetime = models.DateTimeField(auto_now_add=True)
 admin.site.register(Warning)
 class Filter(models.Model):
@@ -63,7 +89,7 @@ class Filter(models.Model):
     antB = models.IntegerField(blank=True,null=True)
     auto = models.BooleanField(blank=True,null=True)
     cross= models.BooleanField(blank=True,null=True)
-    warning = models.ManyToManyField('Warning',blank=True,null=True)
+    warning = models.ManyToManyField('Warning_func',blank=True,null=True)
 
 admin.site.register(Filter)
 class Visibility(models.Model):
@@ -75,7 +101,7 @@ class Visibility(models.Model):
     ('xy','xy'),
     ('yx','yx'),
     )
-    warning = models.ManyToManyField('Warning')
+#    warning = models.ManyToManyField('Warning')
     pol = models.CharField(max_length=2,choices=polerizations)
     score = models.FloatField()
     baseline = models.CharField(max_length=7)
@@ -86,6 +112,16 @@ class Visibility(models.Model):
     
     class Meta:
         verbose_name_plural = "Visibilities"
+    def check_vis(self):
+        """
+        Check out a visibility against all activated warning functions.
+        """
+        aws = Warning_func.objects.exclude(active=False)
+        for wfunc in aws:
+            exec('wtest = '+wfunc.function+'('+self+','+wfunc.parms+')')
+            if wtest:
+                w = Warning(type=wfunc,)
+                w.save()
     
                 
 

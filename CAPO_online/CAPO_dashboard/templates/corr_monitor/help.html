@@ -23,14 +23,38 @@ database every time it is generated. To monitor a baseline, simply refresh the p
 Add a correlator database by going into the <b>Admin</b> interface and navigating
 to the <b>Corr DBs</b> listing and clicking <b>add corr db</b>.
 </p>
-<h3> Feature Tracking </h3>
-Now v1.0:
+<h3> CHANGELOG</h3>
+<h4>May 2009 v1.1 - DCJ:</h4>
+<b>New Features</b>
+<ul>
+<li>Added oCAPO home link to admin pages.
+<li>100 to 200 MHz plot axis mode available.  Limits need to be better defined.
+<li>log and phase plotting functions added
+<li>semilogx,semilogy and loglog plot functions added
+TODO
+<li>Add plotting as option to filter.
+<li>Figure out automatic updating.
+<li>Add ability to create warnings.
+
+</ul>
+<b> Bugfixes </b>
+<ul>
+<li>Antenna selecting now done via regex. Fixes individual selecting issues.
+<li>Db selector persists into visibility plotting screen.
+<li>ymin,ymax,xmin,xmax axis limits on plot page now function correctly
+</ul>
+
+<h4>March 2009 v1.0 - DCJ:</h4>
+<b>Features<b>
 <ul>
 <li>Visibility filtering.
 <li>Plotting (individual baseline)
 <li>Easy scaling of plots
 <li>Switching between databases.
 </ul>
+
+
+
 For next version v1.1:
 <ul>
 <li>Data quality monitoring.
@@ -38,4 +62,7 @@ For next version v1.1:
 <li>User selectable plot function (abs,phase,unwrapped phase, etc)
 <li><b>Open for suggestions!</b>
 </ul>
+
+
+
 {% endblock %}

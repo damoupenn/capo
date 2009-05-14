@@ -1,6 +1,56 @@
 {% extends "corr_monitor/index.html" %}
 {% block main_display %}
+{% if warnings %}
+   <div id="warnings">
+    <div class="module">
+       <table cellspacing="0" width="100%" id="warningtable">
+       <thead>
+       <tr><th>
+       <h2>Recent Warnings</h2>
+       
+       
+       </th></tr></thead><tbody>
+          {% for warning in warnings %}
+             
+             <tr><td class="{% cycle 'row1' 'row2' %}" onmouseover="this.className='mouseover'" onmouseout="this.className='{% cycle 'row1' 'row2' %}'">
+             <a href="vis/{{warning.baseline_id}}/">
+             {{warning.baseline.antA}} &mdash; {{warning.baseline.antB}}</a><br />
+             <span class="mini quiet">{{warning.type}}</span></td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+        <tr><th>
+         <!-- {{ warnings.count }} warnings -->
+         </th>
+        </tr>
+        </tfoot>
+       </table>
+    </div>
+   </div>
+
+{% endif %}
+
 {% if visibilities %}
+    <div class="module" id="filter">
+          <h2> Warning Triggers </h2>
+          <iframe src="/corr_monitor/warning_funcs/" width="100%" id="frame2" frameborder="0">Error, you're browser does not support iframes.</iframe>
+          <h2> Data Filters </h2>
+          <iframe src="/corr_monitor/filters/" width="100%" id="frame" frameborder="0">Error, you're browser does not support iframes.</iframe>
+            <script type="text/javascript">
+                function resizeIframe() {
+                var height = document.documentElement.clientHeight;
+                height -= document.getElementById('frame').offsetTop;
+                
+                // not sure how to get this dynamically
+                height -= 5; /* whatever you set your body bottom margin/padding to be */
+                
+                document.getElementById('frame').style.height = height +"px";
+                };
+                document.getElementById('frame').onload = resizeIframe;
+                window.onresize = resizeIframe;
+            </script>
+    </div>
+
     <table class="module"><caption><h2>All Visibilities</h2></caption>
     <tbody class="vis">
     {{visibilities.rows|safe}}
@@ -10,4 +60,9 @@
 {% else %}
  <p> No visibilities are available </p>
 {% endif %}
+<script type="text/javascript">
+addTableRolloverEffect('warningtable','tableRollOverEffect1','False');
+</script> 
+
+
 {% endblock %}

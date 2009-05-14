@@ -8,9 +8,10 @@ import math as m,numpy as np
 from django.contrib import admin
 import corr.plotdb
 from django.forms import ModelForm
-import pylab as pl
-from config import *
-
+import pylab as pl,types
+from CAPO_dashboard.corr_monitor.config import *
+import CAPO_dashboard.corr_monitor.warning_funcs as warning_func_set
+from CAPO_dashboard.corr_monitor.warning_funcs import *
 
 dbfilename = '/Users/danny/Work/radio_astronomy/Software/CAPO/CAPO_online/CAPO_dashboard/corr_monitor/corr.db'
 vistablewidth = 500
@@ -24,6 +25,12 @@ rewire = {
    0: {'x':12, 'y':13},
    1: {'x':14, 'y':15},
 }
+class Warning_funcForm(ModelForm):
+    """
+    Defines a form used to set un-common settings.
+    """
+    class Meta:
+        model = Warning_func
 class SettingsForm(ModelForm):
     """
     Defines a form used to set un-common settings.
@@ -95,7 +102,58 @@ def filter_detail(request,f_id=0):
         'form':form,
         'action':action
         })
-    
+def warning_funcs_detail(request,wf_id=0):
+    """
+    Display a list of available warning functions. Indicate which ones are applied.
+    """
+    s = load_settings()
+    if wf_id==0:
+        if request.method=='POST':
+            form=Warning_funcForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return HttpResponseRedirect('/corr_monitor/filters/')
+        else:
+            form = Warning_funcForm()
+            action = '/corr_monitor/warning_funcs/save/'
+    else:
+        try: warning_func = Warning_func.objects.get(id=wf_id)
+        except(Warning_func.DoesNotExist):
+            return HttpResponseRedirect('/corr_monitor/warning_funcs/save/')
+        if request.method=='POST':
+            form = Warning_funcForm(request.POST,instance=warning_func)
+            if form.is_valid():
+                form.save()
+                return HttpResponseRedirect('/corr_monitor/warning_funcs/')
+        else:
+            form = Warning_funcForm(instance=warning_func)
+            action = '/corr_monitor/warning_funcs/'+str(wf_id)+'/update/'
+    h = ['<h3>Help</h3>']
+    for a in dir(warning_func_set):
+        if isinstance(getattr(warning_func_set, a, None),types.FunctionType):
+            h.append('<b>'+a+':</b>')
+            exec('h.append('+a+'.__doc__)')
+    return render_to_response('corr_monitor/form_detail.html',{
+        'form':form,
+        'action':action,
+        'help':h        
+        })
+def warning_func_toggle(request,wf_id=0):
+    """
+    Toggle a warning on or off.
+    """
+    try: warning_func = Warning_func.objects.get(id=wf_id)
+    except(Warning_func.DoesNotExist):
+        return HttpResponseRedirect('/corr_monitor/warning_funcs/save/')
+    warning_func.active = not(warning_func.active)
+    warning_func.save()
+    return HttpResponseRedirect('/corr_monitor/warning_funcs/')
+
+def warning_funcs(request):        
+    warning_funcs = Warning_func.objects.all()
+    return render_to_response('corr_monitor/warning_funcs.html',{
+        'warning_funcs':warning_funcs
+        })
 def filters(request):
     """
     Displays a list of available filters. And some other stuff that I always
@@ -223,14 +281,14 @@ def get_vis(f=None):
                 if k is 'cross' and d:
                     v_string = v_string + ".extra(where=['antA<>antB'])"
                 if k is 'antA':
-                    v_string = v_string + ".filter(antA__contains="+str(d)+")"
+                    v_string = v_string + ".filter(antA__regex=r'"+"^"+str(d)+"[a-z]"+"')"
                 if k is 'antB':
-                    v_string = v_string + ".filter(antB__contains="+str(d)+")"
+                    v_string = v_string + ".filter(antB__regex=r'"+"^"+str(d)+"[a-z]"+"')"
                 if k is 'polA':
-                    v_string = v_string + ".filter(antA__contains="+str(d)+")"
+                    v_string = v_string + ".filter(antA__contains='"+str(d)+"')"
                 if k is 'polB':
-                    v_string = v_string + ".filter(antB__contains="+str(d)+")"
-    print v_string
+                    v_string = v_string + ".filter(antB__contains='"+str(d)+"')"
+#    print v_string
     exec(v_string)
     return v
  
@@ -238,7 +296,7 @@ def index(request):
     s = load_settings()
     filter = Filter.objects.all().filter(id=s.filter_id)
     v = get_vis(f=filter)
- 
+    db = corr.plotdb.NumpyDB(dbfilename)
     if v.count()>0:
         m2 = int(m.sqrt(float(v.count())))
         m1 = int(m.ceil(float(v.count()) / m2))
@@ -251,9 +309,13 @@ def index(request):
     v.order_by('antA')#.order_by('antB')
     for i in range(m2):
         table =table + "<tr>"
-        for j in range(m1):
-           if n<v.count(): 
-              classname = str(v[n].warning.all()[0].name)
+        for j in range(m1):           
+           if n<v.count():
+              dataseries = db.read(str(v[n].baseline))            
+              #NB: We only show the top-most warning. Order is arbitrary.
+              ws = Warning.objects.all().filter(baseline=v[n].pk)
+              if len(ws)==0: classname = 'None'
+              else: classname = str(ws[0].type)
               table = table + "<td class=\""+ classname +"\""
               table = table + " onmouseover= \"this.className="
               table = table + "'"+ classname +  " mouseborder'\" "
@@ -266,15 +328,16 @@ def index(request):
               table = table + "<br> "+str(v[n].antB)
               table = table + "</span></a>"
               table = table + "<br>"
+              table = table + str(round(np.average(np.abs(dataseries)),2))
 #              table = table + str(v[n].score)
               table = table + "</td>"
               n +=1
         table = table + "</tr>"
     v.rows = table
     #select all baselines with warnings.name!=None
-    w = Warning.objects.exclude(name__exact="None")
+    w = Warning.objects.all()
+    print w
     dbform = DBForm(instance=s)
-    print v[0].datetime
     return render_to_response('corr_monitor/main.html',
     {'settings': s,'visibilities':v,'warnings':w,
       'dbform':dbform,'time':v[0].datetime})
@@ -285,7 +348,8 @@ def adjust_plot(vis):
     Returns a PlotSetting object.
     """
     #get the plot setting corresponding to this guy
-    pset,created =  vis.plotsetting_set.get_or_create(ymin=None)
+    pset,created =  vis.plotsetting_set.get_or_create(visibility=vis.id)
+    print created
     if not pset.ymax is None: 
         pl.ylim(ymax=float(pset.ymax))
     if not pset.ymin is None:
@@ -305,6 +369,7 @@ def vis_detail(request, vis_id):
     Look at a baseline in detail.
     """
     vis = get_object_or_404(Visibility,pk=vis_id)
+    s = load_settings()
     pl.figure()
     pset = adjust_plot(vis)
     messages = []
@@ -314,22 +379,73 @@ def vis_detail(request, vis_id):
             settingform.save()
             messages.append("Graph updated")
             return HttpResponseRedirect('/corr_monitor/vis/'+vis_id+'/')
-
-    db = corr.plotdb.NumpyDB(dbfilename)
+    db = corr.plotdb.NumpyDB(s.refdb.filename)
     dataseries = db.read(str(vis.baseline))
     outfile = '/corr_monitor/media/img/temp.png'
-
-    pl.plot(np.abs(dataseries))
+    if pset.xaxis=='freq':
+        fmin = 100
+        fmax = 200
+        x = np.linspace(fmin,fmax,num=len(dataseries))
+    else:
+        x = range(len(dataseries))
+    if pset.data_func=='abs':
+        data = np.abs(dataseries)
+    elif pset.data_func=='phs':
+        data = np.angle(dataseries)
+    else:
+        data = dataseries
+    exec('pl.'+pset.plot_func+'(x,data)')
+#    pl.plot(x,np.abs(dataseries))
     pl.grid()
     pl.ylabel('raw amplitude [V]')
     pset = adjust_plot(vis)
     pl.savefig(temproot+outfile,format='png')
     settingform=PlotSettingForm(instance=pset)
-        
+    dbform = DBForm(instance=s)        
     return render_to_response('corr_monitor/vis_detail.html',
          {'vis' : vis,
          'graphs':(outfile,),
          'plotsetting_form':settingform,
+         'dbform':dbform,
          'messages':messages
          })
+def plot_vs(vis):
+    """
+    Generate a single plot from a visibility object and return the name of the file.
+    """
+    s = load_settings()
+    pset,created =  vis.plotsetting_set.get_or_create(visibility=-1)
+    db = corr.plotdb.NumpyDB(s.refdb.filename)
+    dataseries = db.read(str(vis.baseline))
+    img_root = '/corr_monitor/media/img/'
+    outfile = img_root+str(vis.baseline)+'.png'
+    if pset.xaxis=='freq':
+        fmin = 100
+        fmax = 200
+        x = np.linspace(fmin,fmax,num=len(dataseries))
+    else:
+        x = np.range(len(dataseries))
+    if pset.data_func=='abs':
+        data = np.abs(dataseries)
+    elif pset.data_func=='phs':
+        data = np.angle(dataseries)
+    else:
+        data = dataseries
+    exec('pl.'+pset.plot_func+'(x,data)')
+#    pl.plot(x,np.abs(dataseries))
+    pl.grid()
+    pl.ylabel('raw amplitude [V]')
+    pset = adjust_plot(vis)
+    pl.savefig(temproot+outfile,format='png')
+    return outfile
+
+    
+def real_time(request):
+    """
+    Push monitor of baseline averages
+    """
+    s = load_settings()
+    filter = Filter.objects.all().filter(id=s.filter_id)
+    v = get_vis(f=filter)
+    
 

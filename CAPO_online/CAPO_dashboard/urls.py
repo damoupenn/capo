@@ -1,11 +1,11 @@
 from django.conf.urls.defaults import *
 from django.contrib import databrowse
 from CAPO_dashboard.corr_monitor.models import Visibility
-databrowse.site.register(Visibility)
+
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
-
+from CAPO_dashboard.corr_monitor.config import *
 urlpatterns = patterns('',
     # Example:
     # (r'^CAPO_dashboard/', include('CAPO_dashboard.foo.urls')),
@@ -28,7 +28,12 @@ urlpatterns = patterns('',
     (r'^corr_monitor/filters/(?P<f_id>\d+)/update/$','CAPO_dashboard.corr_monitor.views.filter_detail'),
     (r'^corr_monitor/filters/save/$','CAPO_dashboard.corr_monitor.views.filter_detail'),
     (r'^corr_monitor/help/$','CAPO_dashboard.corr_monitor.views.help'),
-    (r'^corr_monitor/filters/add/$','CAPO_dashboard.corr_monitor.views.filter_detail') #TODO: Possibly rename select to filters/modify.html?
+    (r'^corr_monitor/filters/add/$','CAPO_dashboard.corr_monitor.views.filter_detail'), 
+    (r'^corr_monitor/warning_funcs/$','CAPO_dashboard.corr_monitor.views.warning_funcs'),
+    (r'^corr_monitor/warning_funcs/(?P<wf_id>\d+)/$','CAPO_dashboard.corr_monitor.views.warning_funcs_detail'),
+    (r'^corr_monitor/warning_funcs/(?P<wf_id>\d+)/toggle/$','CAPO_dashboard.corr_monitor.views.warning_func_toggle'),
+    (r'^corr_monitor/warning_funcs/(?P<wf_id>\d+)/update/$','CAPO_dashboard.corr_monitor.views.warning_funcs_detail'),
+    (r'^corr_monitor/warning_funcs/save/$','CAPO_dashboard.corr_monitor.views.warning_funcs_detail'),
     #(r'^corr_monitor/corr.css',include('CAPO_dashboard.corr_monitor.corr.css'))
 )
-urlpatterns += patterns('', (r'^corr_monitor/media/(.*)', 'django.views.static.serve', {'document_root':'/Users/danny/Work/radio_astronomy/Software/CAPO/CAPO_online/CAPO_dashboard/templates/corr_monitor/media/', 'show_indexes': True}), )
+urlpatterns += patterns('', (r'^corr_monitor/media/(.*)', 'django.views.static.serve', {'document_root':document_root, 'show_indexes': True}), )

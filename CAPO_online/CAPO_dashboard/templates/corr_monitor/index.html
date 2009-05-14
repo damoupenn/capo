@@ -9,69 +9,20 @@
 </form>
 {{block.super}}
 {% if time %}
-{{time|date:"D d M Y"}}|{{time|time:"H:i:ss"}}
+Last database sync: {{time|date:"D d M Y"}}|{{time|time:"H:i:ss"}}
 {% endif %}
 {% endblock %}
 {% block breadcrumbs %}
-{{block.super}}&nbsp;&nbsp;<a href="/admin/corr_monitor/">Admin</a>
-&nbsp;&nbsp;<a href="/corr_monitor/update/">Update</a>
-&nbsp;&nbsp;<a href="/corr_monitor/help/">Help</a>
+{{block.super}}&nbsp;&mdash;&nbsp;<a href="/admin/corr_monitor/">Admin</a>
+&nbsp;&mdash;&nbsp;<a href="/corr_monitor/update/">Rebuild DB</a>
+&nbsp;&mdash;&nbsp;<a href="/corr_monitor/help/">Help</a>
 {% endblock %}
 {% block extrastyle %}
 <link rel="stylesheet" type="text/css" href="/corr_monitor/media/css/corr.css">
 {% endblock %}
 {% block content %}
-<script type="text/javascript">
-addTableRolloverEffect('warningtable','tableRollOverEffect1','False');
-</script> 
-{% if warnings %}
-   <div id="warnings">
-    <div class="module">
-       <table cellspacing="0" width="100%" id="warningtable">
-       <thead>
-       <tr><th>
-       <h2>Recent Warnings</h2>
-       
-       
-       </th></tr></thead><tbody>
-          {% for warning in warnings %}
-             {% for vis in warning.visibility_set.all %}
-             <tr><td class="{% cycle 'row1' 'row2' %}" onmouseover="this.className='mouseover'" onmouseout="this.className='{% cycle 'row1' 'row2' %}'"><a href="vis/{{vis.id}}/">{{vis.baseline}}</a><br />
-             <span class="mini quiet">{{ warning.name }}</span></td></tr>
-             {% endfor %}
-          {% endfor %}
-        </tbody>
-        <tfoot>
-        <tr><th>
-         <!-- {{ warnings.count }} warnings -->
-         </th>
-        </tr>
-        </tfoot>
-       </table>
-    </div>
-   </div>
 
-{% endif %}
 
-<div class="module" id="filter">
-  <h2> Select Data Filter </h2>
-  <iframe src="/corr_monitor/filters/" width="100%" id="frame" frameborder="0">Error, you're browser does not support iframes.</iframe>
-<script type="text/javascript">
-function resizeIframe() {
-    var height = document.documentElement.clientHeight;
-    height -= document.getElementById('frame').offsetTop;
-    
-    // not sure how to get this dynamically
-    height -= 20; /* whatever you set your body bottom margin/padding to be */
-    
-    document.getElementById('frame').style.height = height +"px";
-    
-};
-document.getElementById('frame').onload = resizeIframe;
-window.onresize = resizeIframe;
-</script>
-
-</div>
 
 {% block main_display %}
 
