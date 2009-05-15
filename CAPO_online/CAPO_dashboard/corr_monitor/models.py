@@ -3,7 +3,8 @@ from django.contrib import admin
 import corr.plotdb
 from CAPO_dashboard.corr_monitor.config import *
 from CAPO_dashboard.corr_monitor.warning_funcs import *
-import CAPO_dashboard.corr_monitor.warning_funcs as warning_func_set
+
+
 
 class Setting(models.Model):
     def __unicode__(self):
@@ -118,10 +119,17 @@ class Visibility(models.Model):
         """
         aws = Warning_func.objects.exclude(active=False)
         for wfunc in aws:
-            exec('wtest = '+wfunc.function+'('+self+','+wfunc.parms+')')
+            exec('wtest = '+wfunc.function+'(self'+',['+wfunc.parms+'])')
             if wtest:
-                w = Warning(type=wfunc,)
+                w,created = Warning.objects.get_or_create(type=wfunc,
+                        baseline=self)
                 w.save()
+            else:
+                try: 
+                    ws = Warning.objects.all().filter(type=wfunc,baseline=self)
+                    for w in ws:w.delete()
+                except(Warning.DoesNotExist): pass
+                
     
                 
 

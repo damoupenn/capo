@@ -311,6 +311,7 @@ def index(request):
         table =table + "<tr>"
         for j in range(m1):           
            if n<v.count():
+              v[n].check_vis()
               dataseries = db.read(str(v[n].baseline))            
               #NB: We only show the top-most warning. Order is arbitrary.
               ws = Warning.objects.all().filter(baseline=v[n].pk)
