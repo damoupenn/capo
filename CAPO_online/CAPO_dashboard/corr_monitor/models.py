@@ -3,7 +3,7 @@ from django.contrib import admin
 import corr.plotdb
 from CAPO_dashboard.corr_monitor.config import *
 from CAPO_dashboard.corr_monitor.warning_funcs import *
-
+from numpy import *
 
 
 class Setting(models.Model):
@@ -21,12 +21,16 @@ class Setting(models.Model):
     lat = models.CharField(max_length=20,blank=True,null=True)
     lon = models.CharField(max_length=20)
     filter = models.ForeignKey('Filter',blank=True,null=True)
+    modes = (('inspect','inspect'),
+        ('stream','stream'))
+    mode = models.CharField(max_length=50,choices=modes)
+    
 class PlotSetting(models.Model):
     def __unicode__(self):
         return str(self.id)   
     ymin = models.FloatField(blank=True,null=True)
     ymax = models.FloatField(blank=True,null=True)
-    visibility = models.ForeignKey('Visibility')
+    visibility = models.ForeignKey('Visibility',blank=True,null=True)
     xmin = models.FloatField(blank=True,null=True)
     xmax = models.FloatField(blank=True,null=True)
     xaxis_types = (
@@ -93,9 +97,28 @@ class Filter(models.Model):
     warning = models.ManyToManyField('Warning_func',blank=True,null=True)
 
 admin.site.register(Filter)
+class Log(models.Model):
+    def __unicode__(self):
+        return str(self.vis)+"  |  "+ str(self.datetime)
+    vis = models.ForeignKey('Visibility')
+    avg = models.FloatField()
+    max = models.FloatField()
+    min = models.FloatField()
+    def save(self,dataseries):
+        #WARNING/TODO NB: Injecting noise for testing purposes!!
+        dataseries = random.normal(abs(dataseries),0.1)
+        ####
+        self.avg = average(abs(dataseries))
+        self.max = max(abs(dataseries))
+        self.min = min(abs(dataseries))
+#        self.warnings = Warning.objects.all().filter(baseline=self.vis)
+        super(Log, self).save()
+    datetime = models.DateTimeField(auto_now_add=True)
+    warnings = models.ManyToManyField('Warning_func',blank=True,null=True)
+admin.site.register(Log)
 class Visibility(models.Model):
     def __unicode__(self):
-        return self.baseline +' - ' + self.pol
+        return self.antA +' - ' + self.antB
     polerizations = (
     ('xx','xx'),
     ('yy','yy'),
@@ -129,6 +152,8 @@ class Visibility(models.Model):
                     ws = Warning.objects.all().filter(type=wfunc,baseline=self)
                     for w in ws:w.delete()
                 except(Warning.DoesNotExist): pass
+        iaws = Warning.objects.all().exclude(type__active__exact=True)
+        for wf in iaws: wf.delete()
                 
     
                 

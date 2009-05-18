@@ -30,7 +30,6 @@
 
 {% endif %}
 
-{% if visibilities %}
     <div class="module" id="filter">
           <h2> Warning Triggers </h2>
           <iframe src="/corr_monitor/warning_funcs/" width="100%" id="frame2" frameborder="0">Error, you're browser does not support iframes.</iframe>
@@ -50,6 +49,8 @@
                 window.onresize = resizeIframe;
             </script>
     </div>
+{% if visibilities %}
+
 
     <table class="module"><caption><h2>All Visibilities</h2></caption>
     <tbody class="vis">
@@ -58,7 +59,24 @@
     </table>
      {{visibilities.count}} visibilites selected
 {% else %}
- <p> No visibilities are available </p>
+ {% if trace %}
+ <table class="module"><h2>Average visibility</h2>
+ <tbody>
+ <tr><td>
+ <img src="{{trace}}" width="100%">
+ </td>
+ <td>
+ <table>
+<form action="/corr_monitor/trace/" method="POST">
+{{plotsetting_form.as_table}}
+<input type="submit" value="Update" />
+</form>
+ </td>
+ </tbody>
+ </table>
+ {% else %}
+ <h3>No visibilities returned.</h3>
+ {% endif %}
 {% endif %}
 <script type="text/javascript">
 addTableRolloverEffect('warningtable','tableRollOverEffect1','False');

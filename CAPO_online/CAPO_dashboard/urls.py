@@ -33,7 +33,8 @@ urlpatterns = patterns('',
     (r'^corr_monitor/warning_funcs/(?P<wf_id>\d+)/$','CAPO_dashboard.corr_monitor.views.warning_funcs_detail'),
     (r'^corr_monitor/warning_funcs/(?P<wf_id>\d+)/toggle/$','CAPO_dashboard.corr_monitor.views.warning_func_toggle'),
     (r'^corr_monitor/warning_funcs/(?P<wf_id>\d+)/update/$','CAPO_dashboard.corr_monitor.views.warning_funcs_detail'),
-    (r'^corr_monitor/warning_funcs/save/$','CAPO_dashboard.corr_monitor.views.warning_funcs_detail'),
+    (r'^corr_monitor/warning_funcs/new/$','CAPO_dashboard.corr_monitor.views.warning_funcs_detail'),
+    (r'^corr_monitor/trace/$','CAPO_dashboard.corr_monitor.views.trace'),
     #(r'^corr_monitor/corr.css',include('CAPO_dashboard.corr_monitor.corr.css'))
 )
 urlpatterns += patterns('', (r'^corr_monitor/media/(.*)', 'django.views.static.serve', {'document_root':document_root, 'show_indexes': True}), )

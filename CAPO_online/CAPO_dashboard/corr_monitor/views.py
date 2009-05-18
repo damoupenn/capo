@@ -12,7 +12,7 @@ import pylab as pl,types
 from CAPO_dashboard.corr_monitor.config import *
 import CAPO_dashboard.corr_monitor.warning_funcs as warning_func_set
 from CAPO_dashboard.corr_monitor.warning_funcs import *
-
+from matplotlib import font_manager
 dbfilename = '/Users/danny/Work/radio_astronomy/Software/CAPO/CAPO_online/CAPO_dashboard/corr_monitor/corr.db'
 vistablewidth = 500
 rewire = {
@@ -240,7 +240,7 @@ def update(request,db_id=0):
         if (antA==antB): is_auto=1
         else: is_auto=0
         #No warnings are generated until the score has been computed.
-        warning = Warning.objects.get(name="None")
+#        warning = Warning.objects.get(name="None")
         #chech for existing baselines
         try: 
             old_v = Visibility.objects.filter(antA=antA).get(antB=antB)
@@ -254,17 +254,13 @@ def update(request,db_id=0):
             score=0,   
             id=oldid)
         new_v.save()
-        new_v.warning.add(warning)
-        new_v.save()
+#        new_v.warning.add(warning)
+#        new_v.save()
         #print Visibility.objects.all()
         #html = html +"."+ bl
     return HttpResponseRedirect('/corr_monitor/')
     #return HttpResponse(html)   
    
-def score(visibilities):
-    """
-    Compute scores of visibilities and create any necessary warnings.
-    """
 def get_vis(f=None):
     """
     Queries the visibility table applying filter in QuerySet f.
@@ -288,7 +284,14 @@ def get_vis(f=None):
                     v_string = v_string + ".filter(antA__contains='"+str(d)+"')"
                 if k is 'polB':
                     v_string = v_string + ".filter(antB__contains='"+str(d)+"')"
-#    print v_string
+
+
+    if len(f[0].warning.all())>0:
+        wname = str(f[0].warning.all()[0])
+        v_string = v_string + ".filter(warning__type__name__exact='"+str(wname)+"')"
+
+#    print Visibility.objects.all().filter(warning__type__name__exact='Low level')
+    print v_string
     exec(v_string)
     return v
  
@@ -296,6 +299,11 @@ def index(request):
     s = load_settings()
     filter = Filter.objects.all().filter(id=s.filter_id)
     v = get_vis(f=filter)
+    dbform = DBForm(instance=s)
+    if len(v)==0:
+            return render_to_response('corr_monitor/main.html',
+    {'settings': s,
+      'dbform':dbform})
     db = corr.plotdb.NumpyDB(dbfilename)
     if v.count()>0:
         m2 = int(m.sqrt(float(v.count())))
@@ -337,20 +345,59 @@ def index(request):
     v.rows = table
     #select all baselines with warnings.name!=None
     w = Warning.objects.all()
-    print w
-    dbform = DBForm(instance=s)
     return render_to_response('corr_monitor/main.html',
     {'settings': s,'visibilities':v,'warnings':w,
       'dbform':dbform,'time':v[0].datetime})
-
-def adjust_plot(vis):
+def trace(request):
+    """
+    Plot a historical trace for all baselines selected by the current filter.
+    TODO draw warning thresholds.
+    """
+    s = load_settings()
+    filter = Filter.objects.all().filter(id=s.filter_id)
+    v = get_vis(f=filter)
+    db = corr.plotdb.NumpyDB(dbfilename)
+    w = Warning.objects.all()
+    dbform = DBForm(instance=s)
+    outfile = '/corr_monitor/media/img/trace.png'
+    fig = pl.figure()
+    pset,create = PlotSetting.objects.get_or_create(plot_func='plot_date')
+    if request.method=='POST':
+        settingform = PlotSettingForm(request.POST,instance=pset)
+        if settingform.is_valid():
+            settingform.save()
+            HttpResponseRedirect('/corr_monitor/trace/')
+    lines = []
+    labels = []
+    for vis in v:
+        #get the trace vector
+        ts = Log.objects.filter(vis=vis)
+        avg = []
+        time = []
+        for t in ts: 
+            time.append(t.datetime)
+            avg.append(t.avg)
+        lines.append(pl.plot(time,avg,label=str(vis),alpha=0.5))
+        labels.append(str(vis))
+        print ts
+    adjust_plot(pset=pset)
+    fig.autofmt_xdate()
+    pl.figlegend(lines,labels,'upper  right',prop=font_manager.FontProperties(
+    size=7))
+    pl.savefig(temproot+outfile,format='png')
+    settingform=PlotSettingForm(instance=pset)
+    return render_to_response('corr_monitor/main.html',
+    {'settings': s,'trace':outfile,'warnings':w,
+      'dbform':dbform,'time':v[0].datetime,'plotsetting_form':settingform})    
+    
+def adjust_plot(vis=None,pset=None):
     """
     Modifies a figure plotting a single visibility. 
     Returns a PlotSetting object.
+    Input plotsetting model or visibility model. Visibility will override.
     """
     #get the plot setting corresponding to this guy
-    pset,created =  vis.plotsetting_set.get_or_create(visibility=vis.id)
-    print created
+    if not vis is None: pset,created =  vis.plotsetting_set.get_or_create(visibility=vis.id)
     if not pset.ymax is None: 
         pl.ylim(ymax=float(pset.ymax))
     if not pset.ymin is None:

@@ -7,26 +7,54 @@
 #  Copyright: Creative Commons or something
 #
 import corr.plotdb
-from CAPO_dashboard.corr_monitor.models import CorrDB 
+from CAPO_dashboard.corr_monitor.models import CorrDB,Log,Visibility,Setting,Warning 
 from django.http import HttpResponseRedirect
 import sys,os,time
 from CAPO_dashboard.corr_monitor.views import update
 from django.core.management.base import BaseCommand 
+import traceback
+
 
 class Command(BaseCommand):
     pass
-print sys.argv[2]
+    
+def scan_log(db):
+    """
+    Scan the data in the database, save a log entry for each time.
+    """
+    viss = Visibility.objects.all()
+    corrdb = corr.plotdb.NumpyDB(db.filename)    
+    for vis in viss:
+        vis.check_vis()
+#        ws = Warning.objects.all().filter(baseline=vis.pk)
+        L  = Log(vis=vis)
+        dataseries = corrdb.read(str(vis.baseline))
+        L.save(dataseries)
+#        for w in ws: L.warnings.add(w)
+#        L.save(dataseries)
+    
+
 db_id = int(sys.argv[2])
 #get my own PID and write to the db
-db,success = CorrDB.objects.get_or_create(pk=db_id)
+db = CorrDB.objects.get(pk=db_id)
+print "Using database file:"+db.filename
+if db.daemon_id: raise Exception, "Daemon "+str(db.daemon_id)+" is already watching this database."
 db.daemon_id = os.getpid()
 db.save()
 #loop 
   # update the db, on _any_ kind of error erase the PID and turn off.
+print "updating reference database:",
+update([],db_id=db_id)
+print "[Success]"
 while CorrDB.objects.get(pk=db_id).daemon_id:
-    try: update([],db_id=db_id)
+    print ".",
+    try: 
+        scan_log(db)
     except: 
+        print traceback.print_exc()
+        print "Error during scan. Exiting..."
         db.daemon_id=None
         db.save()
-        time.sleep(0.5)
-        break
+        sys.exit()
+    sys.stdout.flush()
+    time.sleep(0.5)
