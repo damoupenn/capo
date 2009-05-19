@@ -119,14 +119,14 @@ def warning_funcs_detail(request,wf_id=0):
             form=Warning_funcForm(request.POST)
             if form.is_valid():
                 form.save()
-                return HttpResponseRedirect('/corr_monitor/filters/')
+                return HttpResponseRedirect('/corr_monitor/warning_funcs/')
         else:
             form = Warning_funcForm()
-            action = '/corr_monitor/warning_funcs/save/'
+            action = '/corr_monitor/warning_funcs/new/'
     else:
         try: warning_func = Warning_func.objects.get(id=wf_id)
         except(Warning_func.DoesNotExist):
-            return HttpResponseRedirect('/corr_monitor/warning_funcs/save/')
+            return HttpResponseRedirect('/corr_monitor/warning_funcs/new/')
         if request.method=='POST':
             form = Warning_funcForm(request.POST,instance=warning_func)
             if form.is_valid():
@@ -143,8 +143,9 @@ def warning_funcs_detail(request,wf_id=0):
     return render_to_response('corr_monitor/form_detail.html',{
         'form':form,
         'action':action,
-        'help':h        
+        'help':h
         })
+
 def warning_func_toggle(request,wf_id=0):
     """
     Toggle a warning on or off.
