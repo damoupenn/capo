@@ -311,7 +311,7 @@ def index(request):
             return render_to_response('corr_monitor/main.html',
     {'settings': s,
       'dbform':dbform})
-    db = corr.plotdb.NumpyDB(dbfilename)
+    db = corr.plotdb.NumpyDB(s.refdb.filename)
     if v.count()>0:
         m2 = int(m.sqrt(float(v.count())))
         m1 = int(m.ceil(float(v.count()) / m2))
@@ -364,7 +364,7 @@ def trace(request):
     s = load_settings()
     filter = Filter.objects.all().filter(id=s.filter_id)
     v = get_vis(f=filter)
-    db = corr.plotdb.NumpyDB(dbfilename)
+    db = corr.plotdb.NumpyDB(s.refdb.filename)
     w = Warning.objects.all()
     dbform = DBForm(instance=s)
     outfile = '/corr_monitor/media/img/trace'+str(os.getpid())+'.png'
