@@ -48,11 +48,17 @@
                 document.getElementById('frame').onload = resizeIframe;
                 window.onresize = resizeIframe;
             </script>
+
     </div>
+
+    <table class="module" style="box-shadow:1 0">
 {% if visibilities %}
+     <ul class="basictab" style="width:600px;border-bottom:5px solid #7CA0C7;padding-bottom:3px">
+        <li class="selected"><a href="/corr_monitor/">Grid View</a></li>
+        <li><a href="/corr_monitor/trace/">Trace View</a></li>
+    </ul>
 
 
-    <table class="module"><caption><h2>All Visibilities</h2></caption>
     <tbody class="vis">
     {{visibilities.rows|safe}}
     </tbody>
@@ -60,7 +66,11 @@
      {{visibilities.count}} visibilites selected
 {% else %}
  {% if trace %}
- <table class="module"><h2>Average visibility</h2>
+     <ul class="basictab" style="width:600px;border-bottom:5px solid #7CA0C7;padding-bottom:3px">
+        <li><a href="/corr_monitor/">Grid View</a></li>
+        <li class="selected"><a href="/corr_monitor/trace/">Trace View</a></li>
+    </ul>
+
  <tbody>
  <tr><td>
  <img src="{{trace}}" width="100%">
@@ -68,7 +78,14 @@
  <td>
  <table>
 <form action="/corr_monitor/trace/" method="POST">
-{{plotsetting_form.as_table}}
+<select name="trange">
+  <option value="1.0/24">Hour</option>
+  <option value="6.0/24">6 x Hour</option>
+  <option value="12.0/24">12 x Hour</option>  
+  <option value="1.0">Day</option>
+  <option value="7.0">Week</option>
+  <option value="all">Audi</option>
+</select>
 <input type="submit" value="Update" />
 </form>
  </td>

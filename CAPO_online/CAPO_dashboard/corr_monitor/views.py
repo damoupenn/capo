@@ -4,7 +4,7 @@ from CAPO_dashboard.corr_monitor.models import *
 from django.template import Context, loader
 from django.http import HttpResponseRedirect, HttpResponse,HttpResponseNotFound
 from django.core.urlresolvers import reverse
-import math as m,numpy as np
+import math as m,numpy as np,os
 from django.contrib import admin
 import corr.plotdb
 from django.forms import ModelForm
@@ -13,6 +13,7 @@ from CAPO_dashboard.corr_monitor.config import *
 import CAPO_dashboard.corr_monitor.warning_funcs as warning_func_set
 from CAPO_dashboard.corr_monitor.warning_funcs import *
 from matplotlib import font_manager
+import datetime
 dbfilename = '/Users/danny/Work/radio_astronomy/Software/CAPO/CAPO_online/CAPO_dashboard/corr_monitor/corr.db'
 vistablewidth = 500
 rewire = {
@@ -25,6 +26,12 @@ rewire = {
    0: {'x':12, 'y':13},
    1: {'x':14, 'y':15},
 }
+class CorrDBForm(ModelForm):
+    """
+    Defines a form used to start/stop logging daemon.
+    """
+    class Meta:
+        model=CorrDB
 class Warning_funcForm(ModelForm):
     """
     Defines a form used to set un-common settings.
@@ -43,7 +50,7 @@ class DBForm(ModelForm):
     """
     class Meta:
         model = Setting
-        fields = ('refdb',)
+        fields = ('refdb','mode',)
 class FilterForm(ModelForm):
     """
     Defines a form used to apply data filtering etc settings to dashboard
@@ -215,6 +222,7 @@ def toggle_update_daemon(request,db_id):
     """
     Starts or stops daemon that updates database with db_id.
     """
+    HttpResponseRedirect('/corr_monitor/')
     
     
 def update(request,db_id=0):
@@ -300,6 +308,7 @@ def index(request):
     filter = Filter.objects.all().filter(id=s.filter_id)
     v = get_vis(f=filter)
     dbform = DBForm(instance=s)
+#    cdbform = CorrDBForm(instance=s.refdb)
     if len(v)==0:
             return render_to_response('corr_monitor/main.html',
     {'settings': s,
@@ -353,20 +362,29 @@ def trace(request):
     Plot a historical trace for all baselines selected by the current filter.
     TODO draw warning thresholds.
     """
+    #Load settings, filters etc
     s = load_settings()
     filter = Filter.objects.all().filter(id=s.filter_id)
     v = get_vis(f=filter)
     db = corr.plotdb.NumpyDB(dbfilename)
     w = Warning.objects.all()
     dbform = DBForm(instance=s)
-    outfile = '/corr_monitor/media/img/trace.png'
+    outfile = '/corr_monitor/media/img/trace'+str(os.getpid())+'.png'
     fig = pl.figure()
+    
+    #Load plot settings from 
     pset,create = PlotSetting.objects.get_or_create(plot_func='plot_date')
     if request.method=='POST':
-        settingform = PlotSettingForm(request.POST,instance=pset)
-        if settingform.is_valid():
-            settingform.save()
-            HttpResponseRedirect('/corr_monitor/trace/')
+#        settingform = PlotSettingForm(request.POST,instance=pset)
+#        if settingform.is_valid():
+#            settingform.save()
+        exec('trange='+str(request.POST['trange']))
+        trange = datetime.timedelta(trange)
+        HttpResponseRedirect('/corr_monitor/trace/')
+    else:
+        trange=datetime.timedelta(0)
+
+    #Get data from log
     lines = []
     labels = []
     for vis in v:
@@ -379,10 +397,23 @@ def trace(request):
             avg.append(t.avg)
         lines.append(pl.plot(time,avg,label=str(vis),alpha=0.5))
         labels.append(str(vis))
-        print ts
-    adjust_plot(pset=pset)
+        #print ts
+    if trange:
+        tmax = n.max(time)
+        tmin = tmax-trange
+        pset.tmin = tmin
+        pset.save()
+    else:
+      tmin = pset.tmin
+      trange = n.max(time)-tmin
+    #build plot
+    print trange.days*24.0
+    pl.title('time range :'+str(round(trange.days*24.0+trange.seconds/(60.0*60)))+' hours or '+
+        str(trange.days+round(trange.seconds/(60.0*60*24),3))+' days')
+ #   adjust_plot(pset=pset)
+    pl.xlim(xmin=tmin)
     fig.autofmt_xdate()
-    pl.figlegend(lines,labels,'upper  right',prop=font_manager.FontProperties(
+    pl.figlegend(lines,labels,'upper right',prop=font_manager.FontProperties(
     size=7))
     pl.savefig(temproot+outfile,format='png')
     settingform=PlotSettingForm(instance=pset)
@@ -406,6 +437,10 @@ def adjust_plot(vis=None,pset=None):
         pl.xlim(xmin=float(pset.xmin))
     if not pset.xmax is None:
         pl.xlim(xmax=float(pset.xmax))
+    if not pset.tmin is None:
+        pl.xlim(xmin=float(pset.tmin))
+    if not pset.tmax is None:
+        pl.xlim(xmax=float(pset.tmax))
     
         #pl.title(str(pset.ymax))
 
@@ -429,7 +464,7 @@ def vis_detail(request, vis_id):
             return HttpResponseRedirect('/corr_monitor/vis/'+vis_id+'/')
     db = corr.plotdb.NumpyDB(s.refdb.filename)
     dataseries = db.read(str(vis.baseline))
-    outfile = '/corr_monitor/media/img/temp.png'
+    outfile = '/corr_monitor/media/img/temp'+str(os.getpid())+'.png'
     if pset.xaxis=='freq':
         fmin = 100
         fmax = 200

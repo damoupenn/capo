@@ -33,6 +33,8 @@ class PlotSetting(models.Model):
     visibility = models.ForeignKey('Visibility',blank=True,null=True)
     xmin = models.FloatField(blank=True,null=True)
     xmax = models.FloatField(blank=True,null=True)
+    tmin = models.DateTimeField(blank=True,null=True)
+    tmax = models.DateTimeField(blank=True,null=True)
     xaxis_types = (
        ('freq','freq'),
        ('chan','chan')

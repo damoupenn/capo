@@ -33,28 +33,33 @@ def scan_log(db):
 #        for w in ws: L.warnings.add(w)
 #        L.save(dataseries)
     
+def main(*argv):
+    db_id = int(argv[1])
+        #get my own PID and write to the db
+    db = CorrDB.objects.get(pk=db_id)
+    print "Using database file:"+db.filename
+    if db.daemon_id: raise Exception, "Daemon "+str(db.daemon_id)+" is already watching this database."
+    db.daemon_id = os.getpid()
+    db.save()
+    #loop 
+      # update the db, on _any_ kind of error erase the PID and turn off.
+    print "updating reference database:",
+    update([],db_id=db_id)
+    print "[Success]"
+    while CorrDB.objects.get(pk=db_id).daemon_id:
 
-db_id = int(sys.argv[2])
-#get my own PID and write to the db
-db = CorrDB.objects.get(pk=db_id)
-print "Using database file:"+db.filename
-if db.daemon_id: raise Exception, "Daemon "+str(db.daemon_id)+" is already watching this database."
-db.daemon_id = os.getpid()
-db.save()
-#loop 
-  # update the db, on _any_ kind of error erase the PID and turn off.
-print "updating reference database:",
-update([],db_id=db_id)
-print "[Success]"
-while CorrDB.objects.get(pk=db_id).daemon_id:
-    print ".",
-    try: 
-        scan_log(db)
-    except: 
-        print traceback.print_exc()
-        print "Error during scan. Exiting..."
-        db.daemon_id=None
-        db.save()
-        sys.exit()
-    sys.stdout.flush()
-    time.sleep(0.5)
+        try: 
+            print ".",
+            sys.stdout.flush()
+            time.sleep(10)
+            scan_log(db)
+        except: 
+            print traceback.print_exc()
+            print "Error during scan. Exiting..."
+            db.daemon_id=None
+            db.save()
+            sys.exit()
+
+
+if __name__ == 'CAPO_dashboard.corr_monitor.management.commands.update':
+    main(*sys.argv[1:])

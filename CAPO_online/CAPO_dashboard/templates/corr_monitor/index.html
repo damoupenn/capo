@@ -1,15 +1,32 @@
 
 {% extends "corr_monitor/base_site.html" %}
 {% block branding %} 
+<div style="float:right">
+            {% if settings.refdb.daemon_id %}
+            <h2>Logging is ON</h2>
+            {% else %}
+            <h2>Logging is OFF</h2>
+            {% endif %}</div>
 
 <form style="float:right" action="/corr_monitor/settings/" method="POST">
-{{dbform.refdb.errors}}<label for="id_refdb">Choose source db:</label>
-{{dbform.refdb}}
+{{dbform.refdb.errors}}<label for="id_refdb">Select source db:</label>
+{{dbform.refdb}}<br>
+{{dbform.mode.errors}}<label for="id_mode">Select refresh mode:</label>
+{{dbform.mode}}
 <input type="submit" value="Update"> 
 </form>
+{% block extrahead %}
+
+{% ifequal settings.mode "stream" %}
+<meta http-equiv="refresh" content="5" >
+{% endifequal %}
+{% endblock extrahead %}
+
 {{block.super}}
 {% if time %}
-Last database sync: {{time|date:"D d M Y"}}|{{time|time:"H:i:ss"}}
+Last database sync: {{time|date:"D d M Y"}} - {{time|time:"H:i:s"}}
+<br>
+Current time: {% now "d M Y -  H:i:s" %}
 {% endif %}
 {% endblock %}
 {% block breadcrumbs %}
