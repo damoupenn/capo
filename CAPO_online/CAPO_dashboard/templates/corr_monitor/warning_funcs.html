@@ -1,0 +1,34 @@
+<head>
+<link rel="stylesheet" type="text/css" href="/corr_monitor/media/css/corr.css">
+<link rel="stylesheet" type="text/css" href="/media/css/base.css" />
+
+</head>
+
+{% if warning_funcs %}
+<div  class="module">
+<table border="1" width="100%">
+{% for warning_func in warning_funcs %}
+   <tr class="{% cycle 'row1' 'row2' %}" onmouseover="this.className='mouseover'" onmouseout="this.className='{% cycle 'row1' 'row2' %}'">
+   <td>
+   <span style="font-size:10pt">{{ warning_func.name}}</span>
+   {{warning_func.values}}
+   </td>
+   <td>
+   {% if warning_func.active %}
+   <a href="/corr_monitor/warning_funcs/{{warning_func.id}}/toggle/">Disable</a>
+   {% else %}
+   <a href="/corr_monitor/warning_funcs/{{warning_func.id}}/toggle/">Enable</a>
+   {% endif %}
+   </td>
+   <td style="text-align:right">
+   <a href="/corr_monitor/warning_funcs/{{warning_func.id}}/">Edit</a>
+   </td>
+   </tr>
+   
+   <a href="/corr_monitor/warning_funcs/new/">New Warning Trigger</a>
+{% endfor %}
+
+{% else %}
+No Warning functions found
+
+{% endif %}
