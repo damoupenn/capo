@@ -292,11 +292,9 @@ def get_vis(f=None):
                     v_string = v_string + ".filter(antA__contains='"+str(d)+"')"
                 if k is 'polB':
                     v_string = v_string + ".filter(antB__contains='"+str(d)+"')"
-
-
-    if len(f[0].warning.all())>0:
-        wname = str(f[0].warning.all()[0])
-        v_string = v_string + ".filter(warning__type__name__exact='"+str(wname)+"')"
+        if len(f[0].warning.all())>0:
+            wname = str(f[0].warning.all()[0])
+            v_string = v_string + ".filter(warning__type__name__exact='"+str(wname)+"')"
 
 #    print Visibility.objects.all().filter(warning__type__name__exact='Low level')
     print v_string
