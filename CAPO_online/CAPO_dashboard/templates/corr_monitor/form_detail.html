@@ -1,0 +1,22 @@
+<head>
+<link rel="stylesheet" type="text/css" href="/corr_monitor/media/css/corr.css">
+<link rel="stylesheet" type="text/css" href="/media/css/base.css" />
+
+</head>
+
+
+<form action="{{ action }}" method="POST">
+<table class="module aligned">
+{{ form.as_table }}
+</table>
+<input type="submit" value="Update" />
+</form>
+
+{% if help %}
+    <div class="module">
+        {% for h in help %}
+           {{ h|safe }}
+        {% endfor %}
+    </div>
+{% endif %}
+
