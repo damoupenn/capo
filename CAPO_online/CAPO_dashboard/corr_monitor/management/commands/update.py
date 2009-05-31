@@ -47,18 +47,21 @@ def main(*argv):
     update([],db_id=db_id)
     print "[Success]"
     while CorrDB.objects.get(pk=db_id).daemon_id:
-
-        try: 
-            print ".",
+        try:
+            #print ".",
             sys.stdout.flush()
             time.sleep(10)
             scan_log(db)
-        except: 
+        except(OperationalError):
+            #print traceback.print_exc()
+            print "OperationalError", time.strftime("%a, %d %b %Y %H:%M:%S")
+        except:
             print traceback.print_exc()
             print "Error during scan. Exiting..."
             db.daemon_id=None
             db.save()
             sys.exit()
+
 
 
 if __name__ == 'CAPO_dashboard.corr_monitor.management.commands.update':
